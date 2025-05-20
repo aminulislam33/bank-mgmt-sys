@@ -137,61 +137,98 @@ void transferMoney()
     }
 }
 
+void saveAccountsToFile()
+{
+    FILE *fptr = fopen("accounts.txt", "wb");
+    if (fptr == NULL)
+    {
+        printf("Error opening file for writing!\n");
+        return;
+    }
+
+    fwrite(accounts, sizeof(struct Account), totalAccounts, fptr);
+    fclose(fptr);
+}
+
+void loadAccountsFromFile()
+{
+    FILE *fptr = fopen("accounts.txt", "rb");
+    if (fptr == NULL)
+    {
+        printf("No previous account data found. Starting fresh.\n");
+        return;
+    }
+
+    totalAccounts = fread(accounts, sizeof(struct Account), MAX_ACCOUNTS, fptr);
+
+    fclose(fptr);
+    printf("%d account(s) loaded from file.\n", totalAccounts);
+}
+
 int main()
 {
     int choice;
 
-    while (1)
+    loadAccountsFromFile();
+
+    do
     {
-        if (currentAccountIndex == -1)
-        {
-            printf("\n--- Bank Management System ---\n");
-            printf("1. Create Account\n");
-            printf("2. Login\n");
-            printf("3. Exit\n");
-            printf("Enter your choice: ");
-            scanf("%d", &choice);
+        printf("\n--- Bank Management System ---\n");
+        printf("1. Create Account\n");
+        printf("2. Login\n");
+        printf("3. Check Balance (after login)\n");
+        printf("4. Transfer Money (after login)\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        getchar();
 
-            switch (choice)
+        switch (choice)
+        {
+        case 1:
+            createAccount();
+            saveAccountsToFile();
+            break;
+        case 2:
+            if (login())
             {
-            case 1:
-                createAccount();
-                break;
-            case 2:
-                login();
-                break;
-            case 3:
-                printf("Thank you for using the system.\n");
-                return 0;
-            default:
-                printf("Invalid choice. Try again.\n");
+                printf("Login successful.\n");
             }
-        }
-        else
-        {
-            printf("\n--- Welcome, %s ---\n", accounts[currentAccountIndex].name);
-            printf("1. Check Balance\n");
-            printf("2. Transfer Money\n");
-            printf("3. Logout\n");
-            printf("Enter your choice: ");
-            scanf("%d", &choice);
-
-            switch (choice)
+            else
             {
-            case 1:
+                printf("Login failed.\n");
+            }
+            break;
+        case 3:
+            if (currentAccountIndex != -1)
+            {
                 checkBalance();
-                break;
-            case 2:
-                transferMoney();
-                break;
-            case 3:
-                currentAccountIndex = -1;
-                printf("Logged out successfully.\n");
-                break;
-            default:
-                printf("Invalid choice.\n");
             }
+            else
+            {
+                printf("Please login first.\n");
+            }
+            break;
+        case 4:
+            if (currentAccountIndex != -1)
+            {
+                transferMoney();
+                saveAccountsToFile();
+            }
+            else
+            {
+                printf("Please login first.\n");
+            }
+            break;
+        case 5:
+            saveAccountsToFile();
+            printf("Thank you for using the Bank Management System.\n");
+            break;
+        default:
+            printf("Invalid choice. Try again.\n");
         }
-    }
+
+    } while (choice != 5);
+
     return 0;
 }
